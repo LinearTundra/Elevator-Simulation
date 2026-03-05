@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 public class ElevatorDoors : MonoBehaviour
 {
@@ -17,6 +16,12 @@ public class ElevatorDoors : MonoBehaviour
     private float openPositionX;
     [SerializeField, Tooltip("Local x position of right door's close position")]
     private float closePositionX;
+
+    [Header("Scale Parameters")]
+    [SerializeField, Tooltip("Local x scale of door when closed")]
+    private float doorScaleX;
+    [SerializeField, Tooltip("Local x scale of right frame")]
+    private float frameScaleX;
 
     [Header("Testing")]
     [SerializeField]
@@ -36,7 +41,9 @@ public class ElevatorDoors : MonoBehaviour
     {
         _ = CloseDoor();
     }
-    
+
+#if UNITY_EDITOR
+    // Only for editor testing
     private void Update()
     {
         if (isSwitchingState) return;
@@ -61,39 +68,61 @@ public class ElevatorDoors : MonoBehaviour
             SwitchState();
         }
     }
+#endif
 
     private async Awaitable OpenDoor()
     {
         float timeTaken = 0;
         Vector3 currentPosition = Vector3.zero;
+        Vector3 currentScale = leftDoor.localScale;
+        
         while (timeTaken <= doorAnimationDuration)
         {
             timeTaken += Time.deltaTime;
+            
+            currentScale.x = Mathf.Lerp(doorScaleX, frameScaleX, Mathf.Clamp01(timeTaken / doorAnimationDuration));
+            rightDoor.localScale = currentScale;
+            leftDoor.localScale = currentScale;
+            
             currentPosition.x = Mathf.Lerp(closePositionX, openPositionX, Mathf.Clamp01(timeTaken/doorAnimationDuration));
             rightDoor.localPosition = currentPosition;
             leftDoor.localPosition = -currentPosition;
+            
             await Awaitable.NextFrameAsync();
         }
+        
+        // Door is only considered open once animation completes
         doorOpened = true;
     }
 
     private async Awaitable CloseDoor()
     {
+        // Door is considered closed as soon as it starts moving
         doorOpened = false;
+        
         float timeTaken = 0;
         Vector3 currentPosition = Vector3.zero;
+        Vector3 currentScale = leftDoor.localScale;
+        
         while (timeTaken <= doorAnimationDuration)
         {
             timeTaken += Time.deltaTime;
+            
+            currentScale.x = Mathf.Lerp(frameScaleX, doorScaleX, Mathf.Clamp01(timeTaken / doorAnimationDuration));
+            rightDoor.localScale = currentScale;
+            leftDoor.localScale = currentScale;
+
             currentPosition.x = Mathf.Lerp(openPositionX, closePositionX, Mathf.Clamp01(timeTaken/doorAnimationDuration));
             rightDoor.localPosition = currentPosition;
             leftDoor.localPosition = -currentPosition;
+            
             await Awaitable.NextFrameAsync();
         }
     }
     
     public async void SwitchState()
     {
+        // Checking isSwitchingState as it will be called by other scripts
         if (isSwitchingState) return;
         isSwitchingState = true;
         if (doorOpened) await CloseDoor();
