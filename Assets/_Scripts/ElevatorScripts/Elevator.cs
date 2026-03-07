@@ -135,7 +135,7 @@ public class Elevator : MonoBehaviour
                 upRequestedLevels[level] = false;
                 ElevatorManager.ReachUp(level);
             }
-            else if (requestDir != ElevatorDirection.Up)
+            if (requestDir != ElevatorDirection.Up)
             {
                 downRequestedLevels[level] = false;
                 ElevatorManager.ReachDown(level);
