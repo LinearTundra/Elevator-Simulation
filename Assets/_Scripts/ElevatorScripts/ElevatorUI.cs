@@ -17,73 +17,66 @@ public class ElevatorUI : MonoBehaviour
     [SerializeField]
     private Button callDownButton;
 
-    [Header("Testing")]
-    [SerializeField]
-    private int level;
-    [SerializeField]
-    private ElevatorDirection direction;
-    [SerializeField]
-    private bool callElevatorDown;
-    [SerializeField]
-    private bool callElevatorUp;
-    [SerializeField]
-    private bool reachElevatorDown;
-    [SerializeField]
-    private bool reachElevatorUp;
+    // what level this ui pannel sit at
+    public int level { get; private set; }
 
 
-#if UNITY_EDITOR
-    private void Update()
+    private void Awake()
     {
-        SetLevel(level);
-        SetDirection(direction);
-        if (callElevatorDown)
-        {
-            callElevatorDown = false;
-            ElevatorCalledDown();
-        }
-        if (callElevatorUp)
-        {
-            callElevatorUp = false;
-            ElevatorCalledUp();
-        }
-        if (reachElevatorDown)
-        {
-            reachElevatorDown = false;
-            ElevatorReachedDown();
-        }
-        if (reachElevatorUp)
-        {
-            reachElevatorUp = false;
-            ElevatorReachedUp();
-        }
+        directionTriangle.SetActive(false);
     }
-#endif
 
-    public void ElevatorCalledDown()
+    private void OnEnable()
     {
+        ElevatorManager.OnElevatorCalledUp += ElevatorCalledUp;
+        ElevatorManager.OnElevatorCalledDown += ElevatorCalledDown;
+        ElevatorManager.OnElevatorReachedUp += ElevatorReachedUp;
+        ElevatorManager.OnElevatorReachedDown += ElevatorReachedDown;
+
+        callUpButton.onClick.AddListener(CallUp);
+        callDownButton.onClick.AddListener(CallDown);
+    }
+
+    private void OnDisable()
+    {
+        ElevatorManager.OnElevatorCalledUp -= ElevatorCalledUp;
+        ElevatorManager.OnElevatorCalledDown -= ElevatorCalledDown;
+        ElevatorManager.OnElevatorReachedUp -= ElevatorReachedUp;
+        ElevatorManager.OnElevatorReachedDown -= ElevatorReachedDown;
+
+        callUpButton.onClick.RemoveAllListeners();
+        callDownButton.onClick.RemoveAllListeners();
+    }
+
+
+    public void ElevatorCalledDown(int level)
+    {
+        if (level != this.level) return;
         callDownButton.interactable = false;
     }
 
-    public void ElevatorCalledUp()
+    public void ElevatorCalledUp(int level)
     {
+        if (level != this.level) return;
         callUpButton.interactable = false;
     }
 
-    public void ElevatorReachedUp()
+    public void ElevatorReachedUp(int level)
     {
+        if (level != this.level) return;
         callUpButton.interactable = true;
     }
 
-    public void ElevatorReachedDown()
+    public void ElevatorReachedDown(int level)
     {
+        if (level != this.level) return;
         callDownButton.interactable = true;
     }
 
     public void SetLevel(int level)
     {
         if (level > 0)
-            levelText.text = level.ToString();
+            levelText.text = $"{level}";
         else if (level == 0)
             levelText.text = "G";
         else levelText.text = "B"+Mathf.Abs(level);
@@ -105,6 +98,21 @@ public class ElevatorUI : MonoBehaviour
             directionTriangle.transform.localScale = new Vector3(1, -1, 1);
         }
 
+    }
+
+    public void SetUILevel(int level)
+    {
+        this.level = level;
+    }
+
+    private void CallUp()
+    {
+        ElevatorManager.CallUp(level);
+    }
+
+    private void CallDown()
+    {
+        ElevatorManager.CallDown(level);
     }
 
 }
